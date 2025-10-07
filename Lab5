@@ -1,0 +1,29 @@
+#setup from module 4
+import RPi.GPIO as GPIO
+import time
+import math
+
+# (1.)The time.time() function returns the current system time in seconds. Using this function
+# together with PWM control over a GPIO pin, actuate a single LED with brightness B given by
+# B = (sin(2πƒt)) 2 with a frequency of f=0.2 Hz.
+
+f = 0.2 #frequency
+f_base = 500 #base frequency
+gpio.setmode(gpio.BCM)
+
+#blink with pwm module 4
+pi_pin = 4   
+GPIO.setup(pi_pin, GPIO.OUT)
+pwm = GPIO.PWM(pi_pin, f_base)
+pwm.start(0)
+
+try:
+    while True:
+        t = time.time()
+        B = math.sin(2 * math.pi * f * t)**2 
+        pwm.ChangeDutyCycle(B * 100)
+except KeyboardInterrupt:
+    pass
+finally:
+    pwm.stop()
+    GPIO.cleanup()
