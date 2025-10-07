@@ -3,27 +3,35 @@ import RPi.GPIO as GPIO
 import time
 import math
 
-# (1.)The time.time() function returns the current system time in seconds. Using this function
-# together with PWM control over a GPIO pin, actuate a single LED with brightness B given by
-# B = (sin(2πƒt)) 2 with a frequency of f=0.2 Hz.
+f = 0.2            
+f_base = 500      
+phi = math.pi / 11 
 
-f = 0.2 #frequency
-f_base = 500 #base frequency
 GPIO.setmode(GPIO.BCM)
 
-#blink with pwm module 4
-pi_pin = 4   
-GPIO.setup(pi_pin, GPIO.OUT)
-pwm = GPIO.PWM(pi_pin, f_base)
-pwm.start(0)
+p1 = 4
+p2 = 17
+
+GPIO.setup(p1, GPIO.OUT)
+GPIO.setup(p2, GPIO.OUT)
+pwm1 = GPIO.PWM(p1, f_base)
+pwm2 = GPIO.PWM(p2, f_base)
+pwm1.start(0)
+pwm2.start(0)
 
 try:
     while True:
-        t = time.time()
-        B = math.sin(2 * math.pi * f * t)**2 
-        pwm.ChangeDutyCycle(B * 100)
+        t = time.time()  
+
+        B1 = math.sin(2 * math.pi * f * t) ** 2
+        pwm1.ChangeDutyCycle(B1 * 100)
+
+        B2 = math.sin(2 * math.pi * f * t - phi) ** 2
+        pwm2.ChangeDutyCycle(B2 * 100)
+
 except KeyboardInterrupt:
     pass
 finally:
-    pwm.stop()
+    pwm1.stop()
+    pwm2.stop()
     GPIO.cleanup()
