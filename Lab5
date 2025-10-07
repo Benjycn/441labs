@@ -9,7 +9,7 @@ import math
 
 f = 0.2 #frequency
 f_base = 500 #base frequency
-gpio.setmode(gpio.BCM)
+GPIO.setmode(gpio.BCM)
 
 #blink with pwm module 4
 pi_pin = 4   
