@@ -138,7 +138,7 @@ class Bug:
         if self.__thread:
             self.__thread.join() # module 6, "force calling process to wait for the thread to end before continuing"
         self.__shifter.shiftByte(0)
-        GPIO.cleanup()
+    
 
 
 #import RPi.GPIO as GPIO
