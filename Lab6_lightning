@@ -28,7 +28,7 @@ class Shifter:
         self.__ping(self.latchPin)
 
 # import class, https://www.geeksforgeeks.org/python/how-to-import-a-class-from-another-file-in-python/
-from shifter import Shifter 
+# from shifter import Shifter 
 
 bug = Shifter(serialPin=23, latchPin=24, clockPin=25)
 
