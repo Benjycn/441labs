@@ -1,0 +1,31 @@
+# 4
+import RPi.GPIO as GPIO
+import time
+import random
+# import class, https://www.geeksforgeeks.org/python/how-to-import-a-class-from-another-file-in-python/
+from shifter import Shifter 
+
+bug = Shifter(serialPin=23, latchPin=24, clockPin=25)
+
+try:
+    position = 0  
+    leds = 8 
+
+    while True:
+        # leveraged chatgpt to learn the bitwise left shift
+        led_pattern = 1 << position
+        bug.shiftByte(led_pattern)
+
+        # random between -1 or +1 position, https://www.geeksforgeeks.org/python/random-choices-method-in-python/ 
+        step = random.choice([-1, 1])
+        position += step
+
+        if position < 0:
+            position = 0
+        elif position > leds - 1:
+            position = leds - 1
+
+        time.sleep(0.05)
+
+except KeyboardInterrupt:
+    GPIO.cleanup()
