@@ -2,6 +2,31 @@
 import RPi.GPIO as GPIO
 import time
 import random
+
+class Shifter:
+    def __init__(self, serialPin, latchPin, clockPin): # instantiation
+        # constructor
+        self.serialPin = serialPin
+        self.latchPin = latchPin
+        self.clockPin = clockPin
+
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.serialPin, GPIO.OUT)
+        GPIO.setup(self.latchPin, GPIO.OUT, initial=0)
+        GPIO.setup(self.clockPin, GPIO.OUT, initial=0)
+
+# referenced module 2, page 92, private vs public class variables/methods
+    def __ping(self, p): # private
+        GPIO.output(p, 1)
+        time.sleep(0)
+        GPIO.output(p, 0)
+
+    def shiftByte(self, b): # public
+        for i in range(8):
+            GPIO.output(self.serialPin, b & (1 << i))
+            self.__ping(self.clockPin)
+        self.__ping(self.latchPin)
+
 # import class, https://www.geeksforgeeks.org/python/how-to-import-a-class-from-another-file-in-python/
 from shifter import Shifter 
 
