@@ -1,0 +1,29 @@
+#test shift register code, problem 2, module 5 last page
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM)
+dataPin, latchPin, clockPin = 23, 24, 25
+
+GPIO.setup(dataPin, GPIO.OUT)
+GPIO.setup(latchPin, GPIO.OUT, initial=0)
+GPIO.setup(clockPin, GPIO.OUT, initial=0)
+
+def ping(p):
+    GPIO.output(p, 1)
+    time.sleep(0)
+    GPIO.output(p, 0)
+
+def shiftByte(b):
+    for i in range(8):
+        GPIO.output(dataPin, b & (1 << i))
+        ping(clockPin)
+    ping(latchPin)
+
+try:
+    while 1:
+    for i in range(2**8):
+        shiftByte(i)
+        time.sleep(0.5)
+except KeyboardInterrupt:
+    GPIO.cleanup()
