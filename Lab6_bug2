@@ -103,7 +103,7 @@ class Bug:
         self.timestep = timestep
         self.x = x
         self.isWrapOn = isWrapOn
-        self.__shifter = Shifter()   # private Shifter object
+        self.__shifter = Shifter(23, 24, 25)   # private Shifter object
         self._running = False
         self._thread = None          # background thread reference
 
