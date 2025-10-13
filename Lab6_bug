@@ -63,7 +63,7 @@ class Shifter:
 #import time
 import random
 # import class, https://www.geeksforgeeks.org/python/how-to-import-a-class-from-another-file-in-python/
-from shifter import Shifter 
+#from shifter import Shifter 
 
 
 """
@@ -143,7 +143,7 @@ class Bug:
 
 #import RPi.GPIO as GPIO
 #import time
-from lightnightbug import Bug  
+#from lightnightbug import Bug  
 
 s1 = 17 
 s2 = 27 
