@@ -154,7 +154,7 @@ GPIO.setup(s1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(s2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(s3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-bug = Bug() # instantiate bug object with timestep, position, wrapping
+bug = Bug() # default timestep, position, wrapping
 
 s2_og = GPIO.input(s2)
 
@@ -165,12 +165,9 @@ try:
         s3_new = GPIO.input(s3)
 
         if s1_new:
-            if not bug._Bug__running: # referenced Chatgpt to explain name-mangling convention
-                bug._Bug__running = True
-            bug._Bug__lightningbug()
+            bug.start()
         else:
-            if bug._Bug__running:
-                bug.stop()
+            bug.stop()
 
         if s2_new != s2_og:  
             bug.isWrapOn = not bug.isWrapOn
