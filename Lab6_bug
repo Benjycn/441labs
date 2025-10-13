@@ -167,7 +167,7 @@ try:
         if s1_new:
             if not bug._Bug__running: # referenced Chatgpt to explain name-mangling convention
                 bug._Bug__running = True
-            bug.__lightningbug() 
+            bug._Bug__lightningbug()
         else:
             if bug._Bug__running:
                 bug.stop()
