@@ -164,17 +164,22 @@ try:
         s2_new = GPIO.input(s2)
         s3_new = GPIO.input(s3)
 
-        if s1_new:
-            bug.start()
-        else:
-            bug.stop()
+        if s1_new: 
+            if not bug._Bug__running:
+                bug._Bug__running = True 
+                bug._Bug__lightningbug() 
+            else: 
+                if bug._Bug__running: 
+                    bug.stop()
 
         if s2_new != s2_og:  
             bug.isWrapOn = not bug.isWrapOn
+            print(f"Wrap mode: {'ON' if bug.isWrapOn else 'OFF'}")
             s2_og = s2_new
 
         if s3_new:
             bug.timestep = 0.1 / 3 
+            print("Speed increased 3x")
         else:
             bug.timestep = 0.1    
 
@@ -184,3 +189,4 @@ except KeyboardInterrupt:
     print('\nExiting')
     bug.stop()
     GPIO.cleanup()
+
