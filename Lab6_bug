@@ -103,9 +103,6 @@ class Bug:
             self.__thread.join() # module 6, "force calling process to wait for the thread to end before continuing"
         self.__shifter.shiftByte(0)
 
-
-
-# Pin setup
 s1 = 17 
 s2 = 27 
 s3 = 22 
@@ -115,55 +112,39 @@ GPIO.setup(s1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(s2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(s3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-# Create Bug instance
-bug = Bug()  # default timestep=0.1, x=3, isWrapOn=False
-
-#s1_prev = GPIO.input(s1)
-#s2_prev = GPIO.input(s2)
-
-# Pin setup
-s1 = 17 
-s2 = 27 
-s3 = 22 
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(s1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(s2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(s3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-# Create Bug instance
 bug = Bug()  # default timestep=0.1, x=3, isWrapOn=False
 
 try:
     while True:
-        # --- s1: Toggle bug on/off ---
         if GPIO.input(s1):
-            if bug._Bug__running:       # check if bug is already running
+            if bug._Bug__running: # used Chatgpt to help with name-mangling
                 print("Bug stopped")
                 bug.stop()
             else:
                 print("Bug started")
                 bug.start()
-            time.sleep(0.3)  # debounce delay
+            time.sleep(0.5)  
 
-        # --- s2: Toggle wrapping mode ---
         elif GPIO.input(s2):
             bug.isWrapOn = not bug.isWrapOn
             print(f"Wrap mode: {'ON' if bug.isWrapOn else 'OFF'}")
-            time.sleep(0.3)
+            time.sleep(0.5)
 
-        # --- s3: Change speed ---
         elif GPIO.input(s3):
             bug.timestep = 0.03 if bug.timestep == 0.1 else 0.1
             print(f"Speed changed to: {bug.timestep}")
-            time.sleep(0.3)
+            time.sleep(0.5)
 
         time.sleep(0.05)
 
 except KeyboardInterrupt:
-    print("\nExiting...")
+    print('\nExiting')
     bug.stop()
     GPIO.cleanup()
+
+
+
+
 
 
 
