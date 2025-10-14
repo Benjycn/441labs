@@ -118,36 +118,25 @@ GPIO.setup(s3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 # Create Bug instance
 bug = Bug()  # default timestep=0.1, x=3, isWrapOn=False
 
-s1_prev = GPIO.input(s1)
-s2_prev = GPIO.input(s2)
+#s1_prev = GPIO.input(s1)
+#s2_prev = GPIO.input(s2)
 
 try:
     while True:
-        s1_new = GPIO.input(s1)
-        s2_new = GPIO.input(s2)
-        s3_new = GPIO.input(s3)
+        if GPIO.input(s1):
+            print("Bug started")
+            bug.start()
+            time.sleep(0.3)  # debounce touch
 
-        # --- s1: Turn bug on/off ---
-        if s1_new != s1_prev:  # detect change
-            if s1_new == GPIO.HIGH:
-                print("Bug started")
-                bug.start()
-            else:
-                print("Bug stopped")
-                bug.stop()
-            s1_prev = s1_new
-
-        # --- s2: Toggle wrapping mode ---
-        if s2_new != s2_prev:
+        elif GPIO.input(s2):
             bug.isWrapOn = not bug.isWrapOn
             print(f"Wrap mode: {'ON' if bug.isWrapOn else 'OFF'}")
-            s2_prev = s2_new
+            time.sleep(0.3)
 
-        # --- s3: Change speed ---
-        if s3_new:
-            bug.timestep = 0.1 / 3
-        else:
-            bug.timestep = 0.1
+        elif GPIO.input(s3):
+            bug.timestep = 0.03 if bug.timestep == 0.1 else 0.1
+            print(f"Speed changed to: {bug.timestep}")
+            time.sleep(0.3)
 
         time.sleep(0.05)
 
@@ -155,4 +144,5 @@ except KeyboardInterrupt:
     print("\nExiting...")
     bug.stop()
     GPIO.cleanup()
+
 
