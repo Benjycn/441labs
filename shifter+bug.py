@@ -58,11 +58,11 @@ class Shifter:
 
 
 # 4 - random walk
-import RPi.GPIO as GPIO
-import time
+#import RPi.GPIO as GPIO
+#import time
 import random
 # import class, https://www.geeksforgeeks.org/python/how-to-import-a-class-from-another-file-in-python/
-from shifter import Shifter 
+#from shifter import Shifter 
 
 
 """
