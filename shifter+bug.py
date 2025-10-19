@@ -58,11 +58,11 @@ class Shifter:
 
 
 # 4 - random walk
-#import RPi.GPIO as GPIO
-#import time
+import RPi.GPIO as GPIO
+import time
 import random
 # import class, https://www.geeksforgeeks.org/python/how-to-import-a-class-from-another-file-in-python/
-#from shifter import Shifter 
+from shifter import Shifter 
 
 
 """
@@ -96,6 +96,7 @@ except KeyboardInterrupt:
 # leveraged chatgpt to help with module 6 threading, so that lightningbug runs concurrently
 import threading
 
+# 5 - Bug class
 class Bug:
     def __init__(self, timestep = 0.1, x = 3, isWrapOn = False):
         self.timestep = timestep
@@ -108,7 +109,7 @@ class Bug:
     def __lightningbug(self):
         leds = 8
         while self.__running:
-            led_pattern = 1 << self.x
+            led_pattern = 1 << self.x # learned from chatgpt to get singe left-shift bit, to light up one LED
             self.__shifter.shiftByte(led_pattern)
 
             step = random.choice([-1, 1])
@@ -136,15 +137,24 @@ class Bug:
         self.__running = False
         if self.__thread:
             self.__thread.join() # module 6, "force calling process to wait for the thread to end before continuing"
-        self.__shifter.shiftByte(0)
+        self.__shifter.shiftByte(0) # turn off LEDs
+
+    def toggle(self): # chatgpt debug to figure why my LEDs were hold to run and not toggle
+        if self.__running:
+            self.stop()
+        else:
+            self.start()
 
     def wrap(self):
         self.isWrapOn = not self.isWrapOn
-        print(f"Wrap mode: {'ON' if self.isWrapOn else 'OFF'}")
+        print(f"Wrap: {'ON' if self.isWrapOn else 'OFF'}")
 
     def speed(self):
-        self.timestep = 0.03 if self.timestep == 0.1 else 0.1
-        print(f"Speed changed to: {self.timestep}")
+        if self.timestep == 0.1:
+            self.timestep = 0.03
+        else:
+            self.timestep = 0.1
+        print(f"Speed: {self.timestep}")
 
 s1 = 17 
 s2 = 27  
@@ -158,10 +168,7 @@ GPIO.setup(s3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 bug = Bug() # default timestep=0.1, x=3, isWrapOn=False
 
 def s1_switch(pin):
-    if bug._Bug__running: # used Chatgpt to help with name-mangling
-        bug.stop()
-    else:
-        bug.start()
+    bug.toggle()
 
 def s2_switch(pin):
     bug.wrap()
