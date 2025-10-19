@@ -169,9 +169,9 @@ def s2_switch(channel):
 def s3_switch(channel):
     bug.toggle_speed()
 
-GPIO.add_event_detect(s1, GPIO.RISING, callback=handle_s1, bouncetime=300)
-GPIO.add_event_detect(s2, GPIO.RISING, callback=handle_s2, bouncetime=300)
-GPIO.add_event_detect(s3, GPIO.RISING, callback=handle_s3, bouncetime=300)
+GPIO.add_event_detect(s1, GPIO.RISING, callback=s1_switch, bouncetime=300)
+GPIO.add_event_detect(s2, GPIO.RISING, callback=s2_switch, bouncetime=300)
+GPIO.add_event_detect(s3, GPIO.RISING, callback=s3_switch, bouncetime=300)
 
 try:
     while True:
