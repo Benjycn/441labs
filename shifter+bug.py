@@ -157,16 +157,16 @@ GPIO.setup(s3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 bug = Bug() # default timestep=0.1, x=3, isWrapOn=False
 
-def s1_switch(channel):
+def s1_switch(pin):
     if bug._Bug__running: # used Chatgpt to help with name-mangling
         bug.stop()
     else:
         bug.start()
 
-def s2_switch(channel):
+def s2_switch(pin):
     bug.wrap()
 
-def s3_switch(channel):
+def s3_switch(pin):
     bug.speed()
 
 GPIO.add_event_detect(s1, GPIO.RISING, callback=s1_switch, bouncetime=300)
