@@ -164,10 +164,10 @@ def s1_switch(channel):
         bug.start()
 
 def s2_switch(channel):
-    bug.toggle_wrap()
+    bug.wrap()
 
 def s3_switch(channel):
-    bug.toggle_speed()
+    bug.speed()
 
 GPIO.add_event_detect(s1, GPIO.RISING, callback=s1_switch, bouncetime=300)
 GPIO.add_event_detect(s2, GPIO.RISING, callback=s2_switch, bouncetime=300)
