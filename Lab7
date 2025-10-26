@@ -1,4 +1,4 @@
-e# 1, referencing from "web_gpio_post.py" ddevoe-umd git
+# 1, referencing from "web_gpio_post.py" ddevoe-umd git
 import RPi.GPIO as GPIO
 import threading, socket
 from time import sleep
