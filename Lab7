@@ -73,9 +73,13 @@ def serve_web_page():
             value = int(data_dict['brightness'])
             change_brightness(led, value)
 
-        conn.send(b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n')
-        conn.sendall(web_page())
-        conn.close()
+            # Respond with the same LED selected and slider value preserved
+            conn.send(b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n')
+            conn.sendall(web_page(led, value))
+        else:
+            # Initial load (defaults to LED 1, brightness 0)
+            conn.send(b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n')
+            conn.sendall(web_page())
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', 80))
