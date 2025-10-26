@@ -39,7 +39,7 @@ def parsePOSTdata(data):
     return data_dict
 
 # leveraged chatgpt for general format and made adjustments by using w3schools to test and run
-def web_page():
+def web_page(selected_led=0, current_val=0):
     html = """
     <html>
      <form action="/" method="POST">
