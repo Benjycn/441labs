@@ -44,6 +44,39 @@ def web_page(selected_led=0, current_val=0):
     return bytes(f"""
     <html>
     <head>
+        <title>LED Brightness Control</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin-top: 40px;
+            }}
+            .slider-container {{
+                width: 300px;
+                margin: 20px auto;
+                text-align: left;
+            }}
+            input[type=range] {{
+                width: 200px;
+            }}
+            .value {{
+                display: inline-block;
+                width: 40px;
+                text-align: right;
+            }}
+            .led-label {{
+                width: 60px;
+                display: inline-block;
+            }}
+            .box {{
+                border: 2px solid #ccc;
+                border-radius: 10px;
+                width: 360px;
+                margin: 0 auto;
+                padding: 15px;
+            }}
+        </style>
+    </head>
         <div class="box">
             <div class="slider-container">
                 <span class="led-label">LED1</span>
