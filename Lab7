@@ -1,4 +1,4 @@
-# 1, referencing from "web_gpio_post.py" ddevoe-umd git
+e# 1, referencing from "web_gpio_post.py" ddevoe-umd git
 import RPi.GPIO as GPIO
 import threading, socket
 from time import sleep
@@ -47,7 +47,7 @@ def web_page():
             <input type="range" class="slider" name="brightness" min ="0" max="100" value ="0"/> <br>
             <br>
             Select LED:<br>
-            <input type="radio" name="led" value="0"> LED 1 (""" + str(brightness[0]) + """%)</label> <br>
+            <input type="radio" name="led" value="0" checked> LED 1 (""" + str(brightness[0]) + """%)</label> <br>
             <input type="radio" name="led" value="1"> LED 2 (""" + str(brightness[1]) + """%)</label> <br>
             <input type="radio" name="led" value="2"> LED 3 (""" + str(brightness[2]) + """%)</label> <br>
             <br>
@@ -68,7 +68,7 @@ def serve_web_page():
 
         #parse the request, extract, and convert to int values for brightness change
         data_dict = parsePOSTdata(client_message)
-        if 'led' in data_dict and 'value' in data_dict:
+        if 'led' in data_dict and 'brightness' in data_dict:
             led = int(data_dict['led'])
             value = int(data_dict['value'])
             change_brightness(led, value)
