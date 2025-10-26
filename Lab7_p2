@@ -40,44 +40,81 @@ def parsePOSTdata(data):
 
 # leveraged chatgpt for general format and made adjustments by using w3schools to test and run
 # had issues where LED and slider value kept resetting after page loads, so chat provided guidance by saying to use parameters
-def web_page(selected_led=0, current_val=0):
-    html = """
+def web_page():
+    return bytes(f"""
     <html>
-     <div class="box">
+    <head>
+        <title>LED Brightness Control</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin-top: 40px;
+            }}
+            .slider-container {{
+                width: 300px;
+                margin: 20px auto;
+                text-align: left;
+            }}
+            input[type=range] {{
+                width: 200px;
+            }}
+            .value {{
+                display: inline-block;
+                width: 40px;
+                text-align: right;
+            }}
+            .led-label {{
+                width: 60px;
+                display: inline-block;
+            }}
+            .box {{
+                border: 2px solid #ccc;
+                border-radius: 10px;
+                width: 360px;
+                margin: 0 auto;
+                padding: 15px;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>LED Brightness Control</h2>
+        <div class="box">
             <div class="slider-container">
                 <span class="led-label">LED1</span>
-                <input type="range" id="led0" min="0" max="100" value="{b0}" oninput="updateLED(0, this.value)">
-                <span id="val0" class="value">{b0}</span>
+                <input type="range" id="led0" min="0" max="100" value="{brightness[0]}" oninput="updateLED(0, this.value)">
+                <span id="val0" class="value">{brightness[0]}</span>
             </div>
             <div class="slider-container">
                 <span class="led-label">LED2</span>
-                <input type="range" id="led1" min="0" max="100" value="{b1}" oninput="updateLED(1, this.value)">
-                <span id="val1" class="value">{b1}</span>
+                <input type="range" id="led1" min="0" max="100" value="{brightness[1]}" oninput="updateLED(1, this.value)">
+                <span id="val1" class="value">{brightness[1]}</span>
             </div>
             <div class="slider-container">
                 <span class="led-label">LED3</span>
-                <input type="range" id="led2" min="0" max="100" value="{b2}" oninput="updateLED(2, this.value)">
-                <span id="val2" class="value">{b2}</span>
+                <input type="range" id="led2" min="0" max="100" value="{brightness[2]}" oninput="updateLED(2, this.value)">
+                <span id="val2" class="value">{brightness[2]}</span>
             </div>
         </div>
 
         <script>
-            function updateLED(led, value) {
-                // Update the on-page value instantly
+            function updateLED(led, value) {{
+                // Update displayed value
                 document.getElementById('val' + led).innerText = value;
 
-                // Send the POST request asynchronously
-                fetch("/", {
+                // Send POST request to server
+                fetch("/", {{
                     method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    headers: {{
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    }},
                     body: "led=" + led + "&brightness=" + value
-                });
-            }
+                }});
+            }}
         </script>
     </body>
     </html>
-    """.format(b0=brightness[0], b1=brightness[1], b2=brightness[2])
-    return bytes(html, 'utf-8')
+    """, 'utf-8')
 
 # reference ddevoe-umd git for post.py
 def serve_web_page():
