@@ -44,39 +44,46 @@ def web_page(selected_led=0, current_val=0):
     return bytes(f"""
     <html>
     <head>
-        <title>LED Brightness Control</title>
         <style>
             body {{
                 font-family: Arial, sans-serif;
                 text-align: center;
                 margin-top: 40px;
+                background-color: #fafafa;
+            }}
+            .box {{
+                border: 3px solid #555;
+                border-radius: 12px;
+                width: 420px;
+                margin: 0 auto;
+                padding: 25px;
+                background-color: #fff;
+                box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
             }}
             .slider-container {{
-                width: 300px;
-                margin: 20px auto;
-                text-align: left;
-            }}
-            input[type=range] {{
-                width: 200px;
-            }}
-            .value {{
-                display: inline-block;
-                width: 40px;
-                text-align: right;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin: 20px 0;
             }}
             .led-label {{
                 width: 60px;
-                display: inline-block;
+                font-weight: bold;
+                text-align: left;
             }}
-            .box {{
-                border: 2px solid #ccc;
-                border-radius: 10px;
-                width: 360px;
-                margin: 0 auto;
-                padding: 15px;
+            input[type=range] {{
+                flex: 1;
+                margin: 0 10px;
+                accent-color: #2979ff;
+            }}
+            .value {{
+                width: 40px;
+                font-weight: bold;
+                text-align: right;
             }}
         </style>
     </head>
+    <body>
         <div class="box">
             <div class="slider-container">
                 <span class="led-label">LED1</span>
@@ -97,7 +104,7 @@ def web_page(selected_led=0, current_val=0):
 
         <script>
             function updateLED(led, value) {{
-                // Update displayed value
+                // Update displayed value immediately
                 document.getElementById('val' + led).innerText = value;
 
                 // Send POST request to server
@@ -113,6 +120,7 @@ def web_page(selected_led=0, current_val=0):
     </body>
     </html>
     """, 'utf-8')
+
 
 # reference ddevoe-umd git for post.py
 def serve_web_page():
