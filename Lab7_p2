@@ -42,30 +42,22 @@ def parsePOSTdata(data):
 def web_page():
     """Return HTML page with form and current LED values"""
     html = """
-    <html><head><title>LED Brightness Control</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-    html{font-family: Helvetica; text-align:center;}
-    .button{background:#0F3376; color:white; padding:10px 25px;
-            border:none; border-radius:6px; cursor:pointer;}
-    </style></head><body>
-    <h1>Problem 1: LED Brightness Control</h1>
-    <form action="/" method="POST">
-      <p>Select LED:</p>
-      <label><input type="radio" name="led" value="0" checked> LED1</label>
-      <label><input type="radio" name="led" value="1"> LED2</label>
-      <label><input type="radio" name="led" value="2"> LED3</label><br><br>
-      <label>Brightness (0–100):</label>
-      <input type="text" name="value" value="50"><br><br>
-      <button class="button" type="submit">Set Brightness</button>
-    </form>
-    <h3>Current Brightness</h3>
-    <ul>
-      <li>LED1: """ + str(brightness[0]) + """%</li>
-      <li>LED2: """ + str(brightness[1]) + """%</li>
-      <li>LED3: """ + str(brightness[2]) + """%</li>
-    </ul>
-    </body></html>
+    <html>
+    <form action>="/" method="POST">
+            <p><strong>Brightness level:</strong></p>
+            <input type="range" class="slider" name="brightness" min="0" max="100" value="50" 
+                   oninput="this.nextElementSibling.value = this.value">
+            <br><br>
+
+            <p><strong>Select LED:</strong></p>
+            <label><input type="radio" name="led" value="0" checked> LED 1 (""" + str(brightness[0]) + """%)</label><br>
+            <label><input type="radio" name="led" value="1"> LED 2 (""" + str(brightness[1]) + """%)</label><br>
+            <label><input type="radio" name="led" value="2"> LED 3 (""" + str(brightness[2]) + """%)</label><br><br>
+
+            <input type="submit" class="button" value="Change Brightness">
+        </form>
+    </body>
+    </html>
     """
     return bytes(html, 'utf-8')
 
