@@ -42,15 +42,15 @@ def parsePOSTdata(data):
 def web_page():
     html = """
     <html>
-    <form action="/" method="POST">
-            Brightness level:<br>
-            <input type="range" class="slider" name="brightness" min ="0" max="100" value ="0"/> <br>
-            <br>
+     <form action="/" method="POST">
+            Brightness Level:<br>
+            <input type="range" class="slider" name="brightness" min="0" max="100" value='""" + str(current_val) + """'> <br><br>
+
             Select LED:<br>
-            <input type="radio" name="led" value="0" checked> LED 1 (""" + str(brightness[0]) + """%)</label> <br>
-            <input type="radio" name="led" value="1"> LED 2 (""" + str(brightness[1]) + """%)</label> <br>
-            <input type="radio" name="led" value="2"> LED 3 (""" + str(brightness[2]) + """%)</label> <br>
-            <br>
+            <input type="radio" name="led" value="0" """ + ("checked" if selected_led == 0 else "") + """> LED 1 (""" + str(brightness[0]) + """%)<br>
+            <input type="radio" name="led" value="1" """ + ("checked" if selected_led == 1 else "") + """> LED 2 (""" + str(brightness[1]) + """%)<br>
+            <input type="radio" name="led" value="2" """ + ("checked" if selected_led == 2 else "") + """> LED 3 (""" + str(brightness[2]) + """%)<br><br>
+
             <input type="submit" value="Change Brightness">
         </form>
     </body></html>
