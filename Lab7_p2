@@ -39,28 +39,45 @@ def parsePOSTdata(data):
     return data_dict
 
 # leveraged chatgpt for general format and made adjustments by using w3schools to test and run
-def web_page():
-    """Return HTML page with form and current LED values"""
+# had issues where LED and slider value kept resetting after page loads, so chat provided guidance by saying to use parameters
+def web_page(selected_led=0, current_val=0):
     html = """
     <html>
-    <form action>="/" method="POST">
-            <p><strong>Brightness level:</strong></p>
-            <input type="range" class="slider" name="brightness" min="0" max="100" value="50" 
-                   oninput="this.nextElementSibling.value = this.value">
-            <br><br>
+     <div class="box">
+            <div class="slider-container">
+                <span class="led-label">LED1</span>
+                <input type="range" id="led0" min="0" max="100" value="{b0}" oninput="updateLED(0, this.value)">
+                <span id="val0" class="value">{b0}</span>
+            </div>
+            <div class="slider-container">
+                <span class="led-label">LED2</span>
+                <input type="range" id="led1" min="0" max="100" value="{b1}" oninput="updateLED(1, this.value)">
+                <span id="val1" class="value">{b1}</span>
+            </div>
+            <div class="slider-container">
+                <span class="led-label">LED3</span>
+                <input type="range" id="led2" min="0" max="100" value="{b2}" oninput="updateLED(2, this.value)">
+                <span id="val2" class="value">{b2}</span>
+            </div>
+        </div>
 
-            <p><strong>Select LED:</strong></p>
-            <label><input type="radio" name="led" value="0" checked> LED 1 (""" + str(brightness[0]) + """%)</label><br>
-            <label><input type="radio" name="led" value="1"> LED 2 (""" + str(brightness[1]) + """%)</label><br>
-            <label><input type="radio" name="led" value="2"> LED 3 (""" + str(brightness[2]) + """%)</label><br><br>
+        <script>
+            function updateLED(led, value) {
+                // Update the on-page value instantly
+                document.getElementById('val' + led).innerText = value;
 
-            <input type="submit" class="button" value="Change Brightness">
-        </form>
+                // Send the POST request asynchronously
+                fetch("/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "led=" + led + "&brightness=" + value
+                });
+            }
+        </script>
     </body>
     </html>
-    """
+    """.format(b0=brightness[0], b1=brightness[1], b2=brightness[2])
     return bytes(html, 'utf-8')
-
 
 # reference ddevoe-umd git for post.py
 def serve_web_page():
@@ -73,14 +90,18 @@ def serve_web_page():
 
         #parse the request, extract, and convert to int values for brightness change
         data_dict = parsePOSTdata(client_message)
-        if 'led' in data_dict and 'value' in data_dict:
+        if 'led' in data_dict and 'brightness' in data_dict:
             led = int(data_dict['led'])
-            value = int(data_dict['value'])
+            value = int(data_dict['brightness'])
             change_brightness(led, value)
 
-        conn.send(b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n')
-        conn.sendall(web_page())
-        conn.close()
+            # keep same LED and brightness value
+            conn.send(b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n')
+            conn.sendall(web_page(led, value))
+        else:
+            # default to led 1 and brightness 0
+            conn.send(b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n')
+            conn.sendall(web_page())
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', 80))
