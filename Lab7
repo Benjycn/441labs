@@ -43,7 +43,7 @@ def web_page():
     html = """
     <html>
     <form action="/cgi-bin/range.py" method="POST">
-            Brightness Level:<br>
+            Brightness level:<br>
             <input type="range" name="brightness" min ="0" max="100" value ="0"/> <br>
             <br>
             Select LED:<br>
