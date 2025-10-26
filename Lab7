@@ -42,14 +42,14 @@ def parsePOSTdata(data):
 def web_page():
     html = """
     <html>
-    <form action="/cgi-bin/range.py" method="POST">
+    <form action="/" method="POST">
             Brightness level:<br>
-            <input type="range" name="brightness" min ="0" max="100" value ="0"/> <br>
+            <input type="range" class="slider" name="brightness" min ="0" max="100" value ="0"/> <br>
             <br>
             Select LED:<br>
-            <input type="radio" name="led1" value="led1"> LED 1 (""" + str(brightness[0]) + """%)</label> <br>
-            <input type="radio" name="led2" value="led2"> LED 2 (""" + str(brightness[1]) + """%)</label> <br>
-            <input type="radio" name="led3" value="led3"> LED 3 (""" + str(brightness[2]) + """%)</label> <br>
+            <input type="radio" name="led" value="0"> LED 1 (""" + str(brightness[0]) + """%)</label> <br>
+            <input type="radio" name="led" value="1"> LED 2 (""" + str(brightness[1]) + """%)</label> <br>
+            <input type="radio" name="led" value="2"> LED 3 (""" + str(brightness[2]) + """%)</label> <br>
             <br>
             <input type="submit" value="Change Brightness">
         </form>
