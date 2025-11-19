@@ -1,7 +1,13 @@
 ################################################################################
-# WEB + STEPPER MOTORS + LASER CONTROL SYSTEM
-# Uses TCP/IP sockets, HTML+JS interface, multiprocessing queue motor control,
-# JSON turret position loading, and Raspberry Pi GPIO for laser enable.
+# WEB + STEPPER MOTORS + LASER CONTROL SYSTEM (NO CTYPES VERSION)
+#
+# Uses:
+#   - Two 28BYJ-48 steppers using shift register
+#   - TCP Web Interface (HTML sliders + buttons)
+#   - Laser ON/OFF
+#   - Zero motors
+#   - Loads JSON turret angle from remote server
+#   - multiprocessing.Manager().dict() instead of ctypes
 ################################################################################
 
 import RPi.GPIO as GPIO
@@ -9,65 +15,70 @@ import multiprocessing
 import threading
 import socket
 import json
+import urllib.request
 import time
-from ctypes import c_double
-from Shifter import shifter  # Your custom shift-register class
+from Shifter import shifter
 
-# ----------------------------- GPIO SETUP ------------------------------------
+
+# ----------------------------- CONFIGURATION ---------------------------------
+TEAM_ID = "1"   # <<< CHANGE THIS FOR YOUR TEAM
+JSON_URL = "http://192.168.1.254:8000/positions.json"
+
 GPIO.setmode(GPIO.BCM)
 LASER_PIN = 22
 GPIO.setup(LASER_PIN, GPIO.OUT)
-GPIO.output(LASER_PIN, GPIO.LOW)  # Laser OFF by default
+GPIO.output(LASER_PIN, GPIO.LOW)
 
-# ------------------------- GLOBAL MOTOR MEMORY --------------------------------
-myArray = multiprocessing.Array('i', 2)  # two motors = 2 integers
+# Global register (2 motors → 2 integers)
+myArray = multiprocessing.Array('i', 2)
 
 
-# ------------------------- STEPPER MOTOR CLASS -------------------------------
+# ---------------------------- STEPPER CLASS ----------------------------------
 class Stepper:
     seq = [0b0001,0b0011,0b0010,0b0110,
-           0b0100,0b1100,0b1000,0b1001]   # CCW sequence
-    delay = 8000                         # us (faster)
-    steps_per_degree = 1024 / 360        # 28BYJ-48 but with 1:16 gearbox
+           0b0100,0b1100,0b1000,0b1001]
 
-    def __init__(self, shifter, lock, index):
-        self.s = shifter
+    delay = 8000
+    steps_per_degree = 1024 / 360   # 1:16 gearbox
+
+    def __init__(self, sh, lock, index, shared_angles):
+        self.s = sh
         self.lock = lock
         self.index = index
         self.step_state = 0
+        self.shared = shared_angles
         self.shifter_bit_start = 4 * index
 
-        self.angle = multiprocessing.Value(c_double, 0.0)
+        # Command queue (each motor runs in background)
         self.q = multiprocessing.Queue()
 
-        # Motor command processor
         self.proc = multiprocessing.Process(target=self._run)
         self.proc.daemon = True
         self.proc.start()
 
     def _sgn(self, x):
-        return 0 if x == 0 else int(abs(x)/x)
+        return 1 if x > 0 else -1 if x < 0 else 0
 
     def _step(self, direction):
         with self.lock:
+            # Update step index
             self.step_state = (self.step_state + direction) % 8
             pattern = Stepper.seq[self.step_state]
 
-            # Update motor's 4 bits in shared array
+            # Update shared nibble
             myArray[self.index] &= ~(0b1111 << self.shifter_bit_start)
             myArray[self.index] |= (pattern << self.shifter_bit_start)
 
-            # Combine final register output
+            # Combine full byte
             final = 0
-            for val in myArray:
-                final |= val
+            for v in myArray:
+                final |= v
 
             self.s.shiftByte(final)
 
-            # update shared angle
-            with self.angle.get_lock():
-                self.angle.value = (self.angle.value +
-                                    direction / Stepper.steps_per_degree) % 360
+            # Update angle (NO ctypes)
+            self.shared[self.index] = (self.shared[self.index] +
+                                       direction / Stepper.steps_per_degree) % 360
 
         time.sleep(Stepper.delay / 1e6)
 
@@ -83,31 +94,41 @@ class Stepper:
             self._rotate(delta)
 
     def zero(self):
-        with self.angle.get_lock():
-            self.angle.value = 0.0
+        self.shared[self.index] = 0.0
 
     def goAngle(self, target):
-        with self.angle.get_lock():
-            curr = self.angle.value % 360
-
+        curr = self.shared[self.index]
         target %= 360
         diff = target - curr
 
-        # Shortest path
-        if diff > 180:
-            diff -= 360
-        elif diff < -180:
-            diff += 360
+        # Shortest rotation
+        if diff > 180: diff -= 360
+        if diff < -180: diff += 360
 
         self.q.put(diff)
 
 
-# -------------------------- LOAD JSON LOCATION --------------------------------
-def load_turret_json():
+# ---------------------- LOAD TURRET JSON FROM NETWORK -------------------------
+def load_json_position():
+    """
+    Loads JSON from ENME server.
+    Extracts theta for this team's turret.
+    """
     try:
-        with open("turret.json", "r") as f:
-            return json.load(f)
-    except:
+        with urllib.request.urlopen(JSON_URL, timeout=5) as response:
+            data = json.loads(response.read().decode())
+
+        # Example structure:
+        # {"turrets":{"1":{"theta":1.23}}}
+        theta_rad = data["turrets"][TEAM_ID]["theta"]
+        theta_deg = theta_rad * 180 / 3.14159265
+
+        print(f"[JSON] θ(rad)={theta_rad}, θ(deg)={theta_deg}")
+
+        return {"azimuth": theta_deg, "altitude": 0}
+
+    except Exception as e:
+        print("[ERROR loading JSON]", e)
         return {"azimuth": 0, "altitude": 0}
 
 
@@ -117,69 +138,58 @@ def build_webpage(az, alt, laser_state):
 <html>
 <head>
 <style>
+body {{ font-family: Arial; }}
 .container {{
-    width: 300px;
-    padding: 12px;
-    border: 2px solid #333;
-    border-radius: 8px;
-    font-family: Arial;
-}}
-.label {{
-    font-size: 14px;
-    margin-top: 10px;
+    width: 300px; padding: 12px;
+    border: 2px solid #333; border-radius: 8px;
 }}
 </style>
 
 <script>
-function sendCommand(cmd) {{
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/", true);
-    xhr.send(cmd);
+function send(cmd) {{
+    var x = new XMLHttpRequest();
+    x.open("POST", "/", true);
+    x.send(cmd);
 }}
 
-function setAz(val) {{
-    document.getElementById("az_val").innerHTML = val;
-    sendCommand("azimuth=" + val);
+function setAz(v) {{
+    document.getElementById("az_val").innerHTML = v;
+    send("azimuth=" + v);
 }}
 
-function setAlt(val) {{
-    document.getElementById("alt_val").innerHTML = val;
-    sendCommand("altitude=" + val);
+function setAlt(v) {{
+    document.getElementById("alt_val").innerHTML = v;
+    send("altitude=" + v);
 }}
 
-function laserOn()  {{ sendCommand("laser=on");  }}
-function laserOff() {{ sendCommand("laser=off"); }}
-
-function zero() {{ sendCommand("zero=1"); }}
-
-function loadJSON() {{
-    sendCommand("loadjson=1");
-}}
+function laserOn()  {{ send("laser=on"); }}
+function laserOff() {{ send("laser=off"); }}
+function zero()     {{ send("zero=1"); }}
+function loadJSON() {{ send("loadjson=1"); }}
 </script>
 </head>
 
 <body>
 <div class="container">
-<h3>Stepper Turret Control</h3>
 
-<div class="label">Laser:</div>
+<h2>Turret Control</h2>
+
+<h3>Laser</h3>
 <button onclick="laserOn()">ON</button>
 <button onclick="laserOff()">OFF</button>
 <p>Laser State: <b>{laser_state}</b></p>
 
-<div class="label">Azimuth ({az}°)</div>
-<input type="range" min="0" max="360" value="{az}"
-       oninput="setAz(this.value)">
+<h3>Azimuth ({az}°)</h3>
+<input type="range" min="0" max="360" value="{az}" oninput="setAz(this.value)">
 <span id="az_val">{az}</span>
 
-<div class="label">Altitude ({alt}°)</div>
-<input type="range" min="0" max="360" value="{alt}"
-       oninput="setAlt(this.value)">
+<h3>Altitude ({alt}°)</h3>
+<input type="range" min="0" max="360" value="{alt}" oninput="setAlt(this.value)">
 <span id="alt_val">{alt}</span>
 
 <br><br>
-<button onclick="zero()">Set Zero</button>
-<button onclick="loadJSON()">Go to JSON Location</button>
+<button onclick="zero()">Zero</button>
+<button onclick="loadJSON()">Go to JSON</button>
 
 </div>
 </body>
@@ -187,99 +197,98 @@ function loadJSON() {{
 """
 
 
-# ------------------------------ SOCKET SERVER ---------------------------------
+# ------------------------------ SOCKET PARSER ---------------------------------
 def parsePOSTdata(data):
-    """Extract key/value pairs manually from raw POST."""
     try:
-        body = data.split("\r\n\r\n",1)[1]
+        body = data.split("\r\n\r\n", 1)[1]
         params = {}
         for pair in body.split("&"):
             if "=" in pair:
-                k,v = pair.split("=")
+                k, v = pair.split("=")
                 params[k] = v
         return params
     except:
         return {}
 
 
+# ------------------------------ WEB SERVER ------------------------------------
 def web_server():
-    global az, alt, laser_state
+    global laser_state
 
     while True:
         conn, addr = server.accept()
         msg = conn.recv(2048).decode()
-
         cmd = parsePOSTdata(msg)
 
-        # ------------ LASER CONTROL ------------
+        # Laser control
         if "laser" in cmd:
             if cmd["laser"] == "on":
                 GPIO.output(LASER_PIN, GPIO.HIGH)
                 laser_state = "ON"
-            elif cmd["laser"] == "off":
+            else:
                 GPIO.output(LASER_PIN, GPIO.LOW)
                 laser_state = "OFF"
 
-        # ----------- MANUAL ANGLE CONTROL -------
+        # Manual azimuth
         if "azimuth" in cmd:
-            az = int(cmd["azimuth"])
-            motor_az.goAngle(az)
+            a = int(cmd["azimuth"])
+            shared_angles[0] = a
+            motor_az.goAngle(a)
 
+        # Manual altitude
         if "altitude" in cmd:
-            alt = int(cmd["altitude"])
-            motor_alt.goAngle(alt)
+            b = int(cmd["altitude"])
+            shared_angles[1] = b
+            motor_alt.goAngle(b)
 
-        # -------------- ZERO REFERENCE ----------
+        # Zero
         if "zero" in cmd:
             motor_az.zero()
             motor_alt.zero()
-            az, alt = 0, 0
+            shared_angles[0] = 0
+            shared_angles[1] = 0
 
-        # -------------- LOAD JSON LOCATION ------
+        # Load JSON
         if "loadjson" in cmd:
-            data = load_turret_json()
-            az = data["azimuth"]
-            alt = data["altitude"]
-            motor_az.goAngle(az)
-            motor_alt.goAngle(alt)
+            data = load_json_position()
+            shared_angles[0] = data["azimuth"]
+            shared_angles[1] = data["altitude"]
+            motor_az.goAngle(shared_angles[0])
+            motor_alt.goAngle(shared_angles[1])
 
-        # -------------- SEND PAGE ---------------
-        page = build_webpage(az, alt, laser_state)
+        # Send web page
+        page = build_webpage(shared_angles[0], shared_angles[1], laser_state)
         conn.send(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
         conn.send(page.encode())
         conn.close()
 
 
-# ------------------------------- MAIN -----------------------------------------
+# ----------------------------------- MAIN -------------------------------------
 if __name__ == "__main__":
 
-    # Shift register + multiprocessing lock
+    # Shared dictionary instead of ctypes
+    manager = multiprocessing.Manager()
+    shared_angles = manager.dict({0: 0.0, 1: 0.0})
+
     s = shifter(16, 21, 20)
     lock = multiprocessing.Lock()
 
-    # Two motors: azimuth and altitude
-    motor_az  = Stepper(s, lock, 0)
-    motor_alt = Stepper(s, lock, 1)
+    motor_az = Stepper(s, lock, 0, shared_angles)
+    motor_alt = Stepper(s, lock, 1, shared_angles)
 
-    # Initial turret angles
-    az  = 0
-    alt = 0
     laser_state = "OFF"
 
-    # Socket server on port 80
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(("",80))
+    server.bind(("", 80))
     server.listen(3)
 
-    print("Web control server running at http://<Pi_IP>/")
+    print("Web control interface running on http://<Pi_IP>/")
 
-    # Thread for web server
-    t = threading.Thread(target=web_server, daemon=True)
-    t.start()
+    threading.Thread(target=web_server, daemon=True).start()
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         GPIO.cleanup()
-        print("\nSystem shutting down.")
+        print("\nSystem shut down.")
