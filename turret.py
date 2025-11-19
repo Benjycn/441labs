@@ -25,7 +25,7 @@ TEAM_ID = "1"   # <<< CHANGE THIS FOR YOUR TEAM
 JSON_URL = "http://192.168.1.254:8000/positions.json"
 
 GPIO.setmode(GPIO.BCM)
-LASER_PIN = 22
+LASER_PIN = 17
 GPIO.setup(LASER_PIN, GPIO.OUT)
 GPIO.output(LASER_PIN, GPIO.LOW)
 
