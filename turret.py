@@ -270,7 +270,7 @@ if __name__ == "__main__":
     manager = multiprocessing.Manager()
     shared_angles = manager.dict({0: 0.0, 1: 0.0})
 
-    s = shifter(16, 21, 20)
+    s = shifter(23, 24, 25)
     lock = multiprocessing.Lock()
 
     motor_az = Stepper(s, lock, 0, shared_angles)
