@@ -15,7 +15,7 @@ from Shifter import shifter  # Your custom shift-register class
 
 # ----------------------------- GPIO SETUP ------------------------------------
 GPIO.setmode(GPIO.BCM)
-LASER_PIN = 18
+LASER_PIN = 22
 GPIO.setup(LASER_PIN, GPIO.OUT)
 GPIO.output(LASER_PIN, GPIO.LOW)  # Laser OFF by default
 
