@@ -6,7 +6,7 @@ from shifter import Shifter
 import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BCM)
-LASER_PIN = 22
+LASER_PIN = 17
 GPIO.setup(LASER_PIN, GPIO.OUT)
 GPIO.output(LASER_PIN, GPIO.LOW)
 
@@ -15,7 +15,7 @@ myArray = multiprocessing.Array('i', 2)
 class Stepper:
     seq = [0b0001, 0b0011, 0b0010, 0b0110, 0b0100, 0b1100, 0b1000, 0b1001]
     delay = 3000 
-    steps_per_degree = 1024 / 360
+    steps_per_degree = 2048 / 360
 
     def __init__(self, shifter, lock, index):
         self.s = shifter
