@@ -17,7 +17,7 @@ import socket
 import json
 import urllib.request
 import time
-from Shifter import shifter
+from shifter import Shifter
 
 
 # ----------------------------- CONFIGURATION ---------------------------------
