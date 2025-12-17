@@ -1,3 +1,5 @@
+#throughout referenced lab 5, 7, 8; modules 6-8 for concurrency, network, motors
+#referenced chatgpt for html help, some multithreading/concurrency, confirmed our geometry logic
 import time
 import socket
 import threading
@@ -33,13 +35,13 @@ class Stepper:
     seq = [0b0001, 0b0011, 0b0010, 0b0110,
            0b0100, 0b1100, 0b1000, 0b1001] # CCW sequence
 
-    delay = 3000    # delay between steps, microsec
-    steps_per_degree = 4096 / 360.0   # 28BYJ-48, steps per degree of shaft rotation
+    delay = 3000 # delay between steps, microsec
+    steps_per_degree = 4096 / 360.0 # 28BYJ-48, steps per degree of shaft rotation
 
     def __init__(self, shifter, motor):
         self.s = shifter
-        self.motor = motor    # 0 or 1 for the two motors
-        self.angle = 0.0      # physical angle [-180, 180]
+        self.motor = motor # 0 or 1 for the two motors
+        self.angle = 0.0 # physical angle [-180, 180]
         self.step_state = 0   
 
     def _restrict_angle(self, a): # keep within -180, +180 degrees
@@ -146,12 +148,12 @@ def json_display():
 
         if "turrets" not in data:
             json_status = "Error: JSON has no 'turrets' key."
-            print("ERROR:", json_status)
+            print("Error:", json_status)
             return
 
         if team_numb not in data["turrets"]:
             json_status = f"Error: team_numb {team_numb} not in 'turrets'."
-            print("[ERROR:", json_status)
+            print("[Error:", json_status)
             return
 
         # get our position
@@ -307,7 +309,7 @@ def auto_sequence(m_alt, m_az):
         auto_running = False
 
 
-#webpage -- leveraged chatgpt for layout help
+#webpage,leveraged chatgpt for layout help
 def web_page(log_alt_angle, log_az_angle):
     global json_status, auto_status
 
@@ -450,30 +452,32 @@ Auto Sequence Status
     """
     return html.encode('utf-8')
 
-
-# ---------- WEB SERVER ----------
+#Reference Lab 7 and ddevoe-umd github for web_gpio_POST.py
+#receive references to the altitude and azimuth motors
 def serve_web(m_alt, m_az):
     global calib_alt, calib_az, auto_running
 
+#create a TCP socket, also referenced Lab 7
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(('', 8080))
     s.listen(3)
-    print("Web server running on port 8080...")
+    print("Web server port 8080")
 
+#blocks until a browser connects, mainly referenced module 7 but used chatgpt to help with clean up and threading
     try:
         while True:
-            conn, addr = s.accept()
+            conn, addr = s.accept() #module 7 for sockets, page 7
             try:
-                msg = conn.recv(4096).decode('utf-8', errors='ignore')
+                msg = conn.recv(4096).decode('utf-8', errors='ignore') #4096 bytes, HTTP request into text
                 if not msg:
                     conn.close()
                     continue
-
-                if msg.startswith("POST"):
+                #referenced module 7, post requests
+                if msg.startswith("POST"): 
                     data = parsePOSTdata(msg)
 
-                    # Motor 1: ALTITUDE (logical)
+                    #motor 1 alt, logical to physical move motor angle
                     if "alt" in data and data["alt"].strip() != "":
                         try:
                             log_target_alt = float(data["alt"])
@@ -482,7 +486,7 @@ def serve_web(m_alt, m_az):
                         except ValueError:
                             pass
 
-                    # Motor 2: AZIMUTH (logical)
+                    #motor 2 azimuth, repeat same as above for motor angle
                     if "az" in data and data["az"].strip() != "":
                         try:
                             log_target_az = float(data["az"])
@@ -491,32 +495,31 @@ def serve_web(m_alt, m_az):
                         except ValueError:
                             pass
 
-                    # Laser controls
+                    #control laser fire, concurrency/multithreading lecture
                     if "laser_test" in data:
-                        threading.Thread(target=test_laser, daemon=True).start()
+                        threading.Thread(target=test_laser, daemon=True).start() #had issues where our web would freeze, threading fixed
                     if "laser_on" in data:
                         laser_on()
                     if "laser_off" in data:
                         laser_off()
 
-                    # Calibration: current physical angles become logical (0,0)
+                    #calibrate for 0,0 motor angles 
                     if "set_zero" in data:
                         calib_alt = m_alt.angle
                         calib_az  = m_az.angle
-                        print(f"[CALIBRATION] Set current position as (0,0): "
-                              f"calib_alt={calib_alt:.2f}, calib_az={calib_az:.2f}")
+                        print(f"Set current position as (0,0): "f"calib_alt={calib_alt:.2f}, calib_az={calib_az:.2f}")
 
-                    # Start auto sequence
+                    #start auto sequence, doesn't freeze up web 
                     if "auto" in data and not auto_running:
-                        print("[AUTO] Starting auto sequence...")
-                        threading.Thread(target=auto_sequence,
-                                         args=(m_alt, m_az),
-                                         daemon=True).start()
+                        print("Start auto sequence")
+                        threading.Thread(target=auto_sequence,args=(m_alt, m_az),daemon=True).start()
 
-                # Logical angles for display
+                #logical angles for display
                 log_alt = logical_from_physical(m_alt.angle, calib_alt)
-                log_az  = logical_from_physical(m_az.angle,  calib_az)
+                log_az  = logical_from_physical(m_az.angle, calib_az)
 
+                #used module 7 notes and chat for header 
+                #to build HTML page and angles as well as JSON and auto sequence status
                 response_body = web_page(log_alt, log_az)
                 header = b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n"
                 conn.sendall(header + response_body)
@@ -527,11 +530,11 @@ def serve_web(m_alt, m_az):
         s.close()
 
 
-# ---------- MAIN ----------
+#setup of the components of the turret and initializing the motors
 def main():
     global calib_alt, calib_az
 
-    # GPIO setup moved here so errors don't kill the script at import time
+    #GPIO setup moved here so errors don't kill the script at import time
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     GPIO.setup(laser, GPIO.OUT)
@@ -539,7 +542,7 @@ def main():
 
     sh = Shifter(23, 24, 25)
 
-    # motor 0 = ALTITUDE, motor 1 = AZIMUTH
+    #motor 0 = alt, motor 1 = azimuth
     m_alt = Stepper(sh, 0)
     m_az  = Stepper(sh, 1)
 
@@ -549,15 +552,11 @@ def main():
     calib_alt = m_alt.angle
     calib_az  = m_az.angle
 
-    # Try to load JSON once at startup (non-fatal if it fails)
+    #try to load JSON once at startup
     json_display()
-
     t = threading.Thread(target=serve_web, args=(m_alt, m_az), daemon=True)
     t.start()
-
-    print("Motors initialized. Web interface ready.")
-    print("Open a browser to: http://<raspberry-pi-ip>:8080")
-
+    print("Motors and web are ready")
     try:
         while True:
             time.sleep(1)
@@ -566,12 +565,12 @@ def main():
     finally:
         GPIO.cleanup()
 
-
+#refer lab 8 and ddevo enme441-pi github, stepper shift multiprocessing with chat suggestion for traceback
 if __name__ == '__main__':
     try:
         main()
     except Exception:
         import traceback
-        print("FATAL ERROR:")
+        print("Major error:")
         traceback.print_exc()
         GPIO.cleanup()
