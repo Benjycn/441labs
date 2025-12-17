@@ -1,4 +1,6 @@
-#throughout referenced lab 5, 7, 8; modules 6-8 for concurrency, network, motors
+#TEAM 17, Benjamin N. , Peampat S., Miko S.
+
+#referenced lab 5, 7, 8; modules 6-8 for concurrency, network, motors
 #referenced chatgpt for html help, some multithreading/concurrency, confirmed our geometry logic
 import time
 import socket
